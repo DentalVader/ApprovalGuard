@@ -1,0 +1,25 @@
+{
+  "name": "approvalguard-week2",
+  "version": "1.0.0",
+  "description": "ApprovalGuard - Week 2 with Enhanced Details & Risk Scoring",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "web3",
+    "ethereum",
+    "security",
+    "approvals"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.7.1",
+    "express": "^4.19.2"
+  }
+}
