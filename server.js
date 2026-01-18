@@ -4,6 +4,8 @@ require('dotenv').config();
 const express = require('express');
 const { ethers } = require('ethers');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = 5176;
@@ -28,6 +30,25 @@ const erc20Abi = [
   "function symbol() view returns (string)",
   "function balanceOf(address account) view returns (uint256)"
 ];
+
+// Load contract database
+let contractDatabase = {};
+try {
+  const dbPath = path.join(__dirname, 'contract_database.json');
+  const dbContent = fs.readFileSync(dbPath, 'utf8');
+  const db = JSON.parse(dbContent);
+  
+  // Create a lookup map by address (lowercase for case-insensitive matching)
+  db.contracts.forEach(contract => {
+    contractDatabase[contract.address.toLowerCase()] = contract;
+  });
+  
+  console.log('✓ Contract database loaded successfully');
+  console.log(`  Loaded ${Object.keys(contractDatabase).length} contracts`);
+} catch (error) {
+  console.warn('⚠ Contract database not found or invalid. Using fallback descriptions.');
+  console.warn('  Place contract_database.json in the same directory as server.js');
+}
 
 app.use(express.json());
 
@@ -101,7 +122,13 @@ app.post('/api/approvals', async (req, res) => {
               decimals: parseInt(decimals),
               spenderName: spenderDetails.name,
               spenderDescription: spenderDetails.description,
-              isVerified: spenderDetails.isVerified
+              isVerified: spenderDetails.isVerified,
+              riskLevel: spenderDetails.riskLevel,
+              category: spenderDetails.category,
+              risks: spenderDetails.risks,
+              benefits: spenderDetails.benefits,
+              documentation: spenderDetails.documentation,
+              audited: spenderDetails.audited
             };
           }
         } catch (e) {
@@ -124,8 +151,29 @@ app.post('/api/approvals', async (req, res) => {
   }
 });
 
+/**
+ * Get contract details from database or Etherscan
+ */
 async function getSpenderDetails(spenderAddress) {
   try {
+    // First, try to get from database
+    const normalizedAddress = spenderAddress.toLowerCase();
+    if (contractDatabase[normalizedAddress]) {
+      const dbContract = contractDatabase[normalizedAddress];
+      return {
+        name: dbContract.name,
+        description: dbContract.description,
+        isVerified: dbContract.verified,
+        riskLevel: dbContract.riskLevel,
+        category: dbContract.category,
+        risks: dbContract.risks,
+        benefits: dbContract.benefits,
+        documentation: dbContract.documentation,
+        audited: dbContract.audited
+      };
+    }
+
+    // If not in database, fall back to Etherscan
     const response = await axios.get('https://api.etherscan.io/api', {
       params: {
         module: 'contract',
@@ -133,7 +181,7 @@ async function getSpenderDetails(spenderAddress) {
         address: spenderAddress,
         apikey: ETHERSCAN_API_KEY
       }
-    }  );
+    });
 
     if (response.data.result && response.data.result[0]) {
       const contract = response.data.result[0];
@@ -142,7 +190,13 @@ async function getSpenderDetails(spenderAddress) {
       return {
         name: name,
         description: getApprovalDescription(name),
-        isVerified: contract.SourceCode ? true : false
+        isVerified: contract.SourceCode ? true : false,
+        riskLevel: 'unknown',
+        category: 'Other',
+        risks: ['Verify contract details before approving'],
+        benefits: [],
+        documentation: `https://etherscan.io/address/${spenderAddress}`,
+        audited: false
       };
     }
   } catch (e) {
@@ -152,7 +206,13 @@ async function getSpenderDetails(spenderAddress) {
   return {
     name: 'Unknown Contract',
     description: 'This contract can transfer your tokens.',
-    isVerified: false
+    isVerified: false,
+    riskLevel: 'high',
+    category: 'Unknown',
+    risks: ['Could be a scam or malicious contract', 'No audit information available'],
+    benefits: [],
+    documentation: `https://etherscan.io/address/${spenderAddress}`,
+    audited: false
   };
 }
 
@@ -394,6 +454,18 @@ function getHtmlContent() {
             background: #ff9800;
         }
 
+        .badge.low-risk {
+            background: #4caf50;
+        }
+
+        .badge.medium-risk {
+            background: #ff9800;
+        }
+
+        .badge.high-risk {
+            background: #d32f2f;
+        }
+
         .approval-description {
             background: white;
             padding: 12px;
@@ -436,6 +508,56 @@ function getHtmlContent() {
             margin-left: 10px;
         }
 
+        .risks-benefits {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .risks-list, .benefits-list {
+            margin-bottom: 10px;
+        }
+
+        .risks-list:last-child {
+            margin-bottom: 0;
+        }
+
+        .risks-list h4, .benefits-list h4 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .risks-list ul, .benefits-list ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .risks-list li, .benefits-list li {
+            color: #666;
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+            font-size: 12px;
+        }
+
+        .risks-list li:before {
+            content: "⚠ ";
+            position: absolute;
+            left: 0;
+            color: #ff9800;
+        }
+
+        .benefits-list li:before {
+            content: "✓ ";
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+        }
+
         .revoke-btn {
             width: 100%;
             background: linear-gradient(135deg, #d32f2f 0%, #ff6f00 100%);
@@ -445,6 +567,56 @@ function getHtmlContent() {
 
         .revoke-btn:hover {
             background: #c82333;
+        }
+
+        .revoke-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: linear-gradient(135deg, #999999 0%, #666666 100%);
+        }
+
+        .revoke-btn:disabled:hover {
+            background: linear-gradient(135deg, #999999 0%, #666666 100%);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .revoke-btn:disabled {
+            cursor: default;
+        }
+
+        .custom-tooltip {
+            position: absolute;
+            background-color: #FFD700;
+            color: #000000;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.1s ease-in-out;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 8px;
+        }
+
+        .custom-tooltip.show {
+            opacity: 1;
+        }
+
+        .custom-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #FFD700;
         }
 
         .no-approvals {
@@ -577,12 +749,42 @@ function getHtmlContent() {
                         const isUnlimited = approval.allowance === '115792089237316195423570985008687907853269984665640564039457584007913129639935';
                         const allowanceDisplay = isUnlimited ? 'Unlimited' : approval.allowance;
 
+                        const riskBadgeClass = approval.riskLevel === 'low' ? 'low-risk' : approval.riskLevel === 'medium' ? 'medium-risk' : 'high-risk';
+                        const riskBadgeText = approval.riskLevel ? approval.riskLevel.charAt(0).toUpperCase() + approval.riskLevel.slice(1) + ' Risk' : 'Unknown Risk';
+
+                        let risksHtml = '';
+                        if (approval.risks && approval.risks.length > 0) {
+                            risksHtml = \`
+                                <div class="risks-list">
+                                    <h4>Risks:</h4>
+                                    <ul>
+                                        \${approval.risks.map(risk => \`<li>\${risk}</li>\`).join('')}
+                                    </ul>
+                                </div>
+                            \`;
+                        }
+
+                        let benefitsHtml = '';
+                        if (approval.benefits && approval.benefits.length > 0) {
+                            benefitsHtml = \`
+                                <div class="benefits-list">
+                                    <h4>Benefits:</h4>
+                                    <ul>
+                                        \${approval.benefits.map(benefit => \`<li>\${benefit}</li>\`).join('')}
+                                    </ul>
+                                </div>
+                            \`;
+                        }
+
                         const card = document.createElement('div');
                         card.className = 'approval-card';
                         card.innerHTML = \`
                             <div class="card-header">
                                 <h3>\${approval.tokenName} (\${approval.tokenSymbol})</h3>
-                                <span class="badge \${approval.isVerified ? 'verified' : 'unverified'}">\${approval.isVerified ? '✓ Verified' : '⚠ Unverified'}</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <span class="badge \${approval.isVerified ? 'verified' : 'unverified'}">\${approval.isVerified ? '✓ Verified' : '⚠ Unverified'}</span>
+                                    <span class="badge \${riskBadgeClass}">\${riskBadgeText}</span>
+                                </div>
                             </div>
 
                             <div class="approval-description">
@@ -598,9 +800,28 @@ function getHtmlContent() {
                                     <span class="detail-label">Your Balance</span>
                                     <span class="detail-value">\${parseFloat(approval.userBalance).toLocaleString()} \${approval.tokenSymbol}</span>
                                 </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Category</span>
+                                    <span class="detail-value">\${approval.category || 'Unknown'}</span>
+                                </div>
                             </div>
 
-                            <button class="revoke-btn" onclick="revokeApproval('\${approval.tokenAddress}', '\${approval.spender}', '\${address}')">Revoke Approval</button>
+                            \${risksHtml || benefitsHtml ? \`
+                                <div class="risks-benefits">
+                                    \${risksHtml}
+                                    \${benefitsHtml}
+                                </div>
+                            \` : ''}
+
+                            <div style="position: relative; display: inline-block; width: 100%;">
+                                <button class="revoke-btn" 
+                                    onclick="revokeApproval('\${approval.tokenAddress}', '\${approval.spender}', '\${address}')" 
+                                    \${connectedAddress && connectedAddress.toLowerCase() === address.toLowerCase() ? '' : 'disabled'}
+                                    onmouseenter="showCustomTooltip(this)" 
+                                    onmouseleave="hideCustomTooltip(this)"
+                                >Revoke Approval</button>
+                                <div class="custom-tooltip">Revoke other address than you connected is not possible for security reasons</div>
+                            </div>
                         \`;
                         approvalsContainer.appendChild(card);
                     });
@@ -656,6 +877,22 @@ function getHtmlContent() {
             message.textContent = text;
             message.className = \`message \${type}\`;
             message.style.display = 'block';
+        }
+
+        function showCustomTooltip(button) {
+            if (button.disabled) {
+                const tooltip = button.nextElementSibling;
+                if (tooltip && tooltip.classList.contains('custom-tooltip')) {
+                    tooltip.classList.add('show');
+                }
+            }
+        }
+
+        function hideCustomTooltip(button) {
+            const tooltip = button.nextElementSibling;
+            if (tooltip && tooltip.classList.contains('custom-tooltip')) {
+                tooltip.classList.remove('show');
+            }
         }
 
         walletInput.addEventListener('keypress', (e) => {
