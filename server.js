@@ -298,6 +298,25 @@ function getHtmlContent() {
             font-size: 15px;
         }
 
+        .about-btn {
+            padding: 2px 8px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline;
+            margin: 0 2px;
+            vertical-align: middle;
+        }
+
+        .about-btn:hover {
+            background: #45a049;
+        }
+
         .wallet-section {
             display: flex;
             gap: 10px;
@@ -643,6 +662,7 @@ function getHtmlContent() {
         <div class="header">
             <h1>🛡️ ApprovalGuard.io</h1>
             <p>Review and manage your token approvals</p>
+            <p style="margin-top: 8px; font-size: 14px;">Learn More <button id="aboutBtn" class="about-btn">About</button> Approvals</p>
         </div>
 
         <div class="wallet-section">
@@ -686,8 +706,13 @@ function getHtmlContent() {
         const approvalsContainer = document.getElementById('approvalsContainer');
         const walletInfo = document.getElementById('walletInfo');
         const refreshBtn = document.getElementById('refreshBtn');
+        const aboutBtn = document.getElementById('aboutBtn');
 
         let connectedAddress = null;
+
+        aboutBtn.addEventListener('click', () => {
+            window.open('https://github.com/DentalVader/ApprovalGuard/blob/main/ABOUT_APPROVALGUARD.md', '_blank');
+        });
 
         connectBtn.addEventListener('click', async () => {
             try {
