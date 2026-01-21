@@ -56,6 +56,16 @@ app.get('/', (req, res) => {
   res.send(getHtmlContent());
 });
 
+app.get('/api/about', (req, res) => {
+  try {
+    const aboutPath = path.join(__dirname, 'ABOUT_APPROVALGUARD.md');
+    const aboutContent = fs.readFileSync(aboutPath, 'utf8');
+    res.type('text/plain').send(aboutContent);
+  } catch (error) {
+    res.status(500).send('Unable to load about content');
+  }
+});
+
 app.post('/api/approvals', async (req, res) => {
   try {
     const { walletAddress } = req.body;
@@ -655,6 +665,46 @@ function getHtmlContent() {
             margin-top: 20px;
             padding: 12px 24px;
         }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .modal-close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #000;
+        }
     </style>
 </head>
 <body>
@@ -710,8 +760,33 @@ function getHtmlContent() {
 
         let connectedAddress = null;
 
-        aboutBtn.addEventListener('click', () => {
-            window.open('https://github.com/DentalVader/ApprovalGuard/blob/main/ABOUT_APPROVALGUARD.md', '_blank');
+        aboutBtn.addEventListener('click', async () => {
+            const modal = document.getElementById('aboutModal');
+            const content = document.getElementById('aboutContent');
+            
+            try {
+                const response = await fetch('/api/about');
+                const text = await response.text();
+                content.textContent = text;
+                modal.style.display = 'block';
+            } catch (error) {
+                content.textContent = 'Unable to load content';
+                modal.style.display = 'block';
+            }
+        });
+        
+        const modalClose = document.querySelector('.modal-close');
+        if (modalClose) {
+            modalClose.addEventListener('click', () => {
+                document.getElementById('aboutModal').style.display = 'none';
+            });
+        }
+        
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('aboutModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
         });
 
         connectBtn.addEventListener('click', async () => {
@@ -924,6 +999,14 @@ function getHtmlContent() {
             if (e.key === 'Enter') fetchBtn.click();
         });
     </script>
+    
+    <!-- About Modal -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div id="aboutContent"></div>
+        </div>
+    </div>
 </body>
 </html>
   `;
