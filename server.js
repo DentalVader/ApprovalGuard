@@ -50,6 +50,31 @@ try {
   console.warn('  Place contract_database.json in the same directory as server.js');
 }
 
+// Load exploit database
+let exploitDatabase = {};
+try {
+  const exploitPath = path.join(__dirname, 'exploit_database.json');
+  const exploitContent = fs.readFileSync(exploitPath, 'utf8');
+  const exploitDb = JSON.parse(exploitContent);
+  
+  // Create a lookup map by affected contracts (lowercase for case-insensitive matching)
+  exploitDb.exploits.forEach(exploit => {
+    exploit.affectedContracts.forEach(contract => {
+      const key = contract.toLowerCase();
+      if (!exploitDatabase[key]) {
+        exploitDatabase[key] = [];
+      }
+      exploitDatabase[key].push(exploit);
+    });
+  });
+  
+  console.log('✓ Exploit database loaded successfully');
+  console.log(`  Loaded ${exploitDb.exploits.length} exploits`);
+} catch (error) {
+  console.warn('⚠ Exploit database not found or invalid.');
+  console.warn('  Place exploit_database.json in the same directory as server.js');
+}
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -63,6 +88,27 @@ app.get('/api/about', (req, res) => {
     res.type('text/plain').send(aboutContent);
   } catch (error) {
     res.status(500).send('Unable to load about content');
+  }
+});
+
+app.get('/api/knowledge', (req, res) => {
+  try {
+    const knowledgePath = path.join(__dirname, 'knowledge_base.md');
+    const knowledgeContent = fs.readFileSync(knowledgePath, 'utf8');
+    
+    // Simple markdown to HTML conversion
+    let html = knowledgeContent
+      .replace(/^# (.*?)$/gm, '<h2>$1</h2>')
+      .replace(/^## (.*?)$/gm, '<h3>$1</h3>')
+      .replace(/^### (.*?)$/gm, '<h4>$1</h4>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/^(?!<[h|u|p|t|s])/gm, '<p>')
+      .replace(/(?<!<\/[h|u|p|t|s]>)$/gm, '</p>');
+    
+    res.type('text/html').send(html);
+  } catch (error) {
+    res.status(500).send('<p>Unable to load knowledge content</p>');
   }
 });
 
@@ -121,6 +167,8 @@ app.post('/api/approvals', async (req, res) => {
             ]);
 
             const spenderDetails = await getSpenderDetails(approval.spender);
+            const exploits = checkForExploits(approval.spender);
+            const riskScoring = calculateRiskScore(spenderDetails, allowance.toString(), balance.toString(), exploits);
 
             return {
               tokenName: name,
@@ -138,7 +186,11 @@ app.post('/api/approvals', async (req, res) => {
               risks: spenderDetails.risks,
               benefits: spenderDetails.benefits,
               documentation: spenderDetails.documentation,
-              audited: spenderDetails.audited
+              audited: spenderDetails.audited,
+              riskScore: riskScoring.score,
+              riskFactors: riskScoring.factors,
+              exploits: exploits,
+              hasKnownExploit: exploits.length > 0
             };
           }
         } catch (e) {
@@ -162,8 +214,92 @@ app.post('/api/approvals', async (req, res) => {
 });
 
 /**
- * Get contract details from database or Etherscan
+ * Calculate risk score (0-100) for an approval
  */
+function calculateRiskScore(spenderDetails, allowance, userBalance, exploits = []) {
+  let riskScore = 0;
+  const riskFactors = [];
+
+  // Factor 1: Audit Status (0-25 points)
+  if (spenderDetails.audited) {
+    riskScore += 0;
+    riskFactors.push({ name: 'Audit Status', value: 'Audited', contribution: 0 });
+  } else if (spenderDetails.isVerified) {
+    riskScore += 12;
+    riskFactors.push({ name: 'Audit Status', value: 'Verified', contribution: 12 });
+  } else {
+    riskScore += 25;
+    riskFactors.push({ name: 'Audit Status', value: 'Not Audited', contribution: 25 });
+  }
+
+  // Factor 2: Category Risk (0-20 points)
+  const categoryRiskMap = {
+    'DEX': 4,
+    'Lending': 12,
+    'Staking': 8,
+    'Bridge': 15,
+    'NFT': 20,
+    'Other': 20,
+    'Unknown': 25
+  };
+  const categoryRisk = categoryRiskMap[spenderDetails.category] || 20;
+  riskScore += categoryRisk;
+  riskFactors.push({ name: 'Category', value: spenderDetails.category, contribution: categoryRisk });
+
+  // Factor 3: Risk Level (0-20 points)
+  const riskLevelMap = {
+    'low': 0,
+    'medium': 10,
+    'high': 20,
+    'unknown': 15
+  };
+  const riskLevelScore = riskLevelMap[spenderDetails.riskLevel] || 15;
+  riskScore += riskLevelScore;
+  riskFactors.push({ name: 'Risk Level', value: spenderDetails.riskLevel, contribution: riskLevelScore });
+
+  // Factor 4: Allowance Amount (0-20 points)
+  const allowanceBigInt = BigInt(allowance);
+  const maxUint256 = BigInt('115792089237316195423570985008687907853269984665640564039457584007913129639935');
+  
+  if (allowanceBigInt === maxUint256) {
+    riskScore += 20;
+    riskFactors.push({ name: 'Allowance', value: 'Unlimited', contribution: 20 });
+  } else if (allowanceBigInt > BigInt(userBalance) * BigInt(10)) {
+    riskScore += 15;
+    riskFactors.push({ name: 'Allowance', value: 'Very High (>10x balance)', contribution: 15 });
+  } else if (allowanceBigInt > BigInt(userBalance)) {
+    riskScore += 10;
+    riskFactors.push({ name: 'Allowance', value: 'High (>balance)', contribution: 10 });
+  } else {
+    riskScore += 5;
+    riskFactors.push({ name: 'Allowance', value: 'Reasonable', contribution: 5 });
+  }
+
+  // Factor 5: Known Exploits (0-15 points)
+  if (exploits && exploits.length > 0) {
+    riskScore += 15;
+    riskFactors.push({ name: 'Known Exploits', value: exploits.length + ' exploit(s) found', contribution: 15 });
+  } else {
+    riskFactors.push({ name: 'Known Exploits', value: 'None', contribution: 0 });
+  }
+
+  // Cap the score at 100
+  riskScore = Math.min(riskScore, 100);
+
+  return {
+    score: riskScore,
+    factors: riskFactors
+  };
+}
+
+/**
+ * Check if a spender address is associated with known exploits
+ */
+function checkForExploits(spenderAddress) {
+  const normalizedAddress = spenderAddress.toLowerCase();
+  return exploitDatabase[normalizedAddress] || [];
+}
+
 async function getSpenderDetails(spenderAddress) {
   try {
     // First, try to get from database
@@ -393,6 +529,27 @@ function getHtmlContent() {
         input:focus {
             outline: none;
             border-color: #667eea;
+        }
+        
+        .clear-icon {
+            cursor: pointer;
+            color: #999;
+            font-size: 18px;
+            font-weight: bold;
+            user-select: none;
+            transition: color 0.2s;
+            display: none;
+            padding: 0 8px;
+            line-height: 1;
+            align-self: center;
+        }
+        
+        .clear-icon:hover {
+            color: #333;
+        }
+        
+        .clear-icon.show {
+            display: block;
         }
 
         .message {
@@ -705,6 +862,80 @@ function getHtmlContent() {
         .modal-close:hover {
             color: #000;
         }
+        
+        .risk-factors-section {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border-left: 4px solid #FF9800;
+        }
+        
+        .risk-factors-section h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .risk-factors-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .risk-factor-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .factor-name {
+            font-weight: 600;
+            color: #333;
+            min-width: 120px;
+        }
+        
+        .factor-value {
+            color: #666;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .factor-contribution {
+            font-weight: 600;
+            color: #FF9800;
+            min-width: 60px;
+            text-align: right;
+        }
+        
+        .exploit-warning {
+            background: #FFF3CD;
+            border: 1px solid #FFE69C;
+            border-left: 4px solid #FF6B6B;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            color: #856404;
+            font-size: 13px;
+        }
+        
+        .exploit-warning strong {
+            color: #FF6B6B;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .exploit-warning ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .exploit-warning li {
+            margin: 4px 0;
+        }
     </style>
 </head>
 <body>
@@ -712,7 +943,7 @@ function getHtmlContent() {
         <div class="header">
             <h1>🛡️ ApprovalGuard.io</h1>
             <p>Review and manage your token approvals</p>
-            <p style="margin-top: 8px; font-size: 14px;">Learn More <button id="aboutBtn" class="about-btn">About</button> Approvals</p>
+            <p style="margin-top: 8px; font-size: 14px;">Learn More <button id="aboutBtn" class="about-btn">About</button> Approvals | <button id="knowledgeBtn" class="about-btn">Knowledge</button></p>
         </div>
 
         <div class="wallet-section">
@@ -722,6 +953,7 @@ function getHtmlContent() {
 
         <div class="input-section">
             <input type="text" id="walletAddress" placeholder="Enter wallet address or use connected wallet" autocomplete="off" />
+            <span class="clear-icon" id="clearIcon">&times;</span>
             <button id="fetchBtn">Find Approval</button>
         </div>
 
@@ -757,8 +989,54 @@ function getHtmlContent() {
         const walletInfo = document.getElementById('walletInfo');
         const refreshBtn = document.getElementById('refreshBtn');
         const aboutBtn = document.getElementById('aboutBtn');
+        const knowledgeBtn = document.getElementById('knowledgeBtn');
+        const clearIcon = document.getElementById('clearIcon');
 
         let connectedAddress = null;
+        
+        // Clear icon functionality
+        walletInput.addEventListener('input', () => {
+            if (walletInput.value.trim()) {
+                clearIcon.classList.add('show');
+            } else {
+                clearIcon.classList.remove('show');
+            }
+        });
+        
+        clearIcon.addEventListener('click', () => {
+            walletInput.value = '';
+            clearIcon.classList.remove('show');
+            walletInput.focus();
+        });
+
+        knowledgeBtn.addEventListener('click', async () => {
+            const modal = document.getElementById('knowledgeModal');
+            const content = document.getElementById('knowledgeContent');
+            
+            try {
+                const response = await fetch('/api/knowledge');
+                const html = await response.text();
+                content.innerHTML = html;
+                modal.style.display = 'block';
+            } catch (error) {
+                content.innerHTML = '<p>Unable to load knowledge content</p>';
+                modal.style.display = 'block';
+            }
+        });
+        
+        const modalCloseKnowledge = document.querySelector('.modal-close-knowledge');
+        if (modalCloseKnowledge) {
+            modalCloseKnowledge.addEventListener('click', () => {
+                document.getElementById('knowledgeModal').style.display = 'none';
+            });
+        }
+        
+        window.addEventListener('click', (event) => {
+            const knowledgeModal = document.getElementById('knowledgeModal');
+            if (event.target === knowledgeModal) {
+                knowledgeModal.style.display = 'none';
+            }
+        });
 
         aboutBtn.addEventListener('click', async () => {
             const modal = document.getElementById('aboutModal');
@@ -851,6 +1129,11 @@ function getHtmlContent() {
 
                         const riskBadgeClass = approval.riskLevel === 'low' ? 'low-risk' : approval.riskLevel === 'medium' ? 'medium-risk' : 'high-risk';
                         const riskBadgeText = approval.riskLevel ? approval.riskLevel.charAt(0).toUpperCase() + approval.riskLevel.slice(1) + ' Risk' : 'Unknown Risk';
+                        
+                        // Determine risk score color
+                        let riskScoreColor = '#4CAF50'; // Green
+                        if (approval.riskScore >= 60) riskScoreColor = '#FF5722'; // Red
+                        else if (approval.riskScore >= 40) riskScoreColor = '#FF9800'; // Orange
 
                         let risksHtml = '';
                         if (approval.risks && approval.risks.length > 0) {
@@ -875,17 +1158,61 @@ function getHtmlContent() {
                                 </div>
                             \`;
                         }
+                        
+                        let riskFactorsHtml = '';
+                        if (approval.riskFactors && approval.riskFactors.length > 0) {
+                            riskFactorsHtml = \`
+                                <div class="risk-factors-section">
+                                    <h4>Risk Score Breakdown:</h4>
+                                    <div class="risk-factors-list">
+                                        \${approval.riskFactors.map(factor => {
+                                            const maxPoints = {
+                                                'Audit Status': 25,
+                                                'Category Risk': 20,
+                                                'Risk Level': 20,
+                                                'Allowance Amount': 20,
+                                                'Known Exploits': 15
+                                            }[factor.name] || 20;
+                                            return \`
+                                            <div class="risk-factor-item">
+                                                <span class="factor-name">\${factor.name}</span>
+                                                <span class="factor-value">\${factor.value}</span>
+                                                <span class="factor-contribution">\${factor.contribution}/\${maxPoints}</span>
+                                            </div>
+                                        \`;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            \`;
+                        }
+                        
+                        let exploitWarningHtml = '';
+                        if (approval.hasKnownExploit && approval.exploits && approval.exploits.length > 0) {
+                            exploitWarningHtml = \`
+                                <div class="exploit-warning">
+                                    <strong>⚠️ Known Exploit Alert:</strong>
+                                    <ul>
+                                        \${approval.exploits.map(exploit => \`<li>\${exploit.name} - \${exploit.date}</li>\`).join('')}
+                                    </ul>
+                                </div>
+                            \`;
+                        }
 
                         const card = document.createElement('div');
                         card.className = 'approval-card';
                         card.innerHTML = \`
                             <div class="card-header">
                                 <h3>\${approval.tokenName} (\${approval.tokenSymbol})</h3>
-                                <div style="display: flex; gap: 8px;">
+                                <div style="display: flex; gap: 8px; align-items: center;">
                                     <span class="badge \${approval.isVerified ? 'verified' : 'unverified'}">\${approval.isVerified ? '✓ Verified' : '⚠ Unverified'}</span>
                                     <span class="badge \${riskBadgeClass}">\${riskBadgeText}</span>
+                                    <div class="risk-score-badge" style="background-color: \${riskScoreColor}; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px;">
+                                        Risk: \${approval.riskScore}/100
+                                    </div>
                                 </div>
                             </div>
+
+                            \${exploitWarningHtml}
 
                             <div class="approval-description">
                                 <strong>\${approval.spenderName}</strong> - \${approval.spenderDescription}
@@ -905,6 +1232,8 @@ function getHtmlContent() {
                                     <span class="detail-value">\${approval.category || 'Unknown'}</span>
                                 </div>
                             </div>
+
+                            \${riskFactorsHtml}
 
                             \${risksHtml || benefitsHtml ? \`
                                 <div class="risks-benefits">
@@ -1005,6 +1334,14 @@ function getHtmlContent() {
         <div class="modal-content">
             <span class="modal-close">&times;</span>
             <div id="aboutContent"></div>
+        </div>
+    </div>
+    
+    <!-- Knowledge Modal -->
+    <div id="knowledgeModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-knowledge">&times;</span>
+            <div id="knowledgeContent"></div>
         </div>
     </div>
 </body>
