@@ -1,0 +1,526 @@
+{
+  "networks": [
+    {
+      "id": 1,
+      "name": "Ethereum",
+      "shortName": "eth",
+      "rpc": "https://eth-mainnet.g.alchemy.com/v2/",
+      "explorer": "https://etherscan.io",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 137,
+      "name": "Polygon",
+      "shortName": "matic",
+      "rpc": "https://polygon-mainnet.g.alchemy.com/v2/",
+      "explorer": "https://polygonscan.com",
+      "currency": "MATIC",
+      "type": "mainnet"
+    },
+    {
+      "id": 42161,
+      "name": "Arbitrum One",
+      "shortName": "arb1",
+      "rpc": "https://arb-mainnet.g.alchemy.com/v2/",
+      "explorer": "https://arbiscan.io",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 10,
+      "name": "Optimism",
+      "shortName": "opt",
+      "rpc": "https://opt-mainnet.g.alchemy.com/v2/",
+      "explorer": "https://optimistic.etherscan.io",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 8453,
+      "name": "Base",
+      "shortName": "base",
+      "rpc": "https://base-mainnet.g.alchemy.com/v2/",
+      "explorer": "https://basescan.org",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 56,
+      "name": "BNB Smart Chain",
+      "shortName": "bsc",
+      "rpc": "https://bsc-dataseed.bnbchain.org:443",
+      "explorer": "https://bscscan.com",
+      "currency": "BNB",
+      "type": "mainnet"
+    },
+    {
+      "id": 250,
+      "name": "Fantom",
+      "shortName": "ftm",
+      "rpc": "https://rpc.ftm.tools",
+      "explorer": "https://ftmscan.com",
+      "currency": "FTM",
+      "type": "mainnet"
+    },
+    {
+      "id": 43114,
+      "name": "Avalanche C-Chain",
+      "shortName": "avax",
+      "rpc": "https://api.avax.network/ext/bc/C/rpc",
+      "explorer": "https://snowtrace.io",
+      "currency": "AVAX",
+      "type": "mainnet"
+    },
+    {
+      "id": 25,
+      "name": "Cronos",
+      "shortName": "cro",
+      "rpc": "https://evm.cronos.org",
+      "explorer": "https://cronoscan.com",
+      "currency": "CRO",
+      "type": "mainnet"
+    },
+    {
+      "id": 1101,
+      "name": "Polygon zkEVM",
+      "shortName": "zkEVM",
+      "rpc": "https://zkevm-rpc.com",
+      "explorer": "https://zkevm.polygonscan.com",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 324,
+      "name": "zkSync Era",
+      "shortName": "zksync",
+      "rpc": "https://mainnet.era.zksync.io",
+      "explorer": "https://explorer.zksync.io",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 59144,
+      "name": "Linea",
+      "shortName": "linea",
+      "rpc": "https://rpc.linea.build",
+      "explorer": "https://lineascan.com",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 34443,
+      "name": "Mode",
+      "shortName": "mode",
+      "rpc": "https://mainnet.mode.network",
+      "explorer": "https://modescan.io",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 7,
+      "name": "ThunderCore",
+      "shortName": "tt",
+      "rpc": "https://mainnet-rpc.thundercore.com",
+      "explorer": "https://viewblock.io/thundercore",
+      "currency": "TT",
+      "type": "mainnet"
+    },
+    {
+      "id": 288,
+      "name": "Boba Network",
+      "shortName": "boba",
+      "rpc": "https://mainnet.boba.network",
+      "explorer": "https://bobascan.com",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 100,
+      "name": "Gnosis Chain",
+      "shortName": "gno",
+      "rpc": "https://rpc.gnosischain.com",
+      "explorer": "https://gnosisscan.io",
+      "currency": "xDAI",
+      "type": "mainnet"
+    },
+    {
+      "id": 1088,
+      "name": "Metis",
+      "shortName": "metis",
+      "rpc": "https://andromeda.metis.io/?owner=1088",
+      "explorer": "https://andromeda-explorer.metis.io",
+      "currency": "METIS",
+      "type": "mainnet"
+    },
+    {
+      "id": 1284,
+      "name": "Moonbeam",
+      "shortName": "glmr",
+      "rpc": "https://rpc.api.moonbeam.network",
+      "explorer": "https://moonscan.io",
+      "currency": "GLMR",
+      "type": "mainnet"
+    },
+    {
+      "id": 1285,
+      "name": "Moonriver",
+      "shortName": "movr",
+      "rpc": "https://rpc.api.moonriver.moonbeam.network",
+      "explorer": "https://moonriver.moonscan.io",
+      "currency": "MOVR",
+      "type": "mainnet"
+    },
+    {
+      "id": 2222,
+      "name": "Kava",
+      "shortName": "kava",
+      "rpc": "https://evm.kava.io",
+      "explorer": "https://explorer.kava.io",
+      "currency": "KAVA",
+      "type": "mainnet"
+    },
+    {
+      "id": 106,
+      "name": "Velas",
+      "shortName": "velas",
+      "rpc": "https://evmexplorer.velas.com/rpc",
+      "explorer": "https://evmexplorer.velas.com",
+      "currency": "VLX",
+      "type": "mainnet"
+    },
+    {
+      "id": 128,
+      "name": "Huobi ECO Chain",
+      "shortName": "heco",
+      "rpc": "https://http-mainnet.hecochain.com",
+      "explorer": "https://hecoinfo.com",
+      "currency": "HT",
+      "type": "mainnet"
+    },
+    {
+      "id": 1313161554,
+      "name": "Aurora",
+      "shortName": "aurora",
+      "rpc": "https://mainnet.aurora.dev",
+      "explorer": "https://explorer.aurora.dev",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 42220,
+      "name": "Celo",
+      "shortName": "celo",
+      "rpc": "https://forno.celo.org",
+      "explorer": "https://celoscan.io",
+      "currency": "CELO",
+      "type": "mainnet"
+    },
+    {
+      "id": 1666600000,
+      "name": "Harmony One",
+      "shortName": "one",
+      "rpc": "https://api.harmony.one",
+      "explorer": "https://explorer.harmony.one",
+      "currency": "ONE",
+      "type": "mainnet"
+    },
+    {
+      "id": 9001,
+      "name": "Evmos",
+      "shortName": "evmos",
+      "rpc": "https://eth.bd.evmos.org:8545",
+      "explorer": "https://escan.live",
+      "currency": "EVMOS",
+      "type": "mainnet"
+    },
+    {
+      "id": 11155111,
+      "name": "Ethereum Sepolia",
+      "shortName": "sep",
+      "rpc": "https://eth-sepolia.g.alchemy.com/v2/",
+      "explorer": "https://sepolia.etherscan.io",
+      "currency": "ETH",
+      "type": "testnet"
+    },
+    {
+      "id": 80001,
+      "name": "Polygon Mumbai",
+      "shortName": "mumbai",
+      "rpc": "https://polygon-mumbai.g.alchemy.com/v2/",
+      "explorer": "https://mumbai.polygonscan.com",
+      "currency": "MATIC",
+      "type": "testnet"
+    },
+    {
+      "id": 421614,
+      "name": "Arbitrum Sepolia",
+      "shortName": "arb-sep",
+      "rpc": "https://sepolia-rollup.arbitrum.io/rpc",
+      "explorer": "https://sepolia.arbiscan.io",
+      "currency": "ETH",
+      "type": "testnet"
+    },
+    {
+      "id": 11155420,
+      "name": "Optimism Sepolia",
+      "shortName": "opt-sep",
+      "rpc": "https://sepolia.optimism.io",
+      "explorer": "https://sepolia-optimistic.etherscan.io",
+      "currency": "ETH",
+      "type": "testnet"
+    },
+    {
+      "id": 84532,
+      "name": "Base Sepolia",
+      "shortName": "base-sep",
+      "rpc": "https://sepolia.base.org",
+      "explorer": "https://sepolia.basescan.org",
+      "currency": "ETH",
+      "type": "testnet"
+    },
+    {
+      "id": 97,
+      "name": "BNB Testnet",
+      "shortName": "bsc-test",
+      "rpc": "https://data-seed-prebsc-1-b.binance.org:8545",
+      "explorer": "https://testnet.bscscan.com",
+      "currency": "BNB",
+      "type": "testnet"
+    },
+    {
+      "id": 4002,
+      "name": "Fantom Testnet",
+      "shortName": "ftm-test",
+      "rpc": "https://rpc.testnet.fantom.network",
+      "explorer": "https://testnet.ftmscan.com",
+      "currency": "FTM",
+      "type": "testnet"
+    },
+    {
+      "id": 43113,
+      "name": "Avalanche Fuji",
+      "shortName": "fuji",
+      "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
+      "explorer": "https://testnet.snowtrace.io",
+      "currency": "AVAX",
+      "type": "testnet"
+    },
+    {
+      "id": 5,
+      "name": "Ethereum Goerli",
+      "shortName": "gor",
+      "rpc": "https://eth-goerli.g.alchemy.com/v2/",
+      "explorer": "https://goerli.etherscan.io",
+      "currency": "ETH",
+      "type": "testnet"
+    },
+    {
+      "id": 7701,
+      "name": "Canto",
+      "shortName": "canto",
+      "rpc": "https://mainnode.plexnode.org:8545",
+      "explorer": "https://evm.explorer.canto.io",
+      "currency": "CANTO",
+      "type": "mainnet"
+    },
+    {
+      "id": 1030,
+      "name": "Conflux eSpace",
+      "shortName": "cfx",
+      "rpc": "https://evm.confluxrpc.com",
+      "explorer": "https://evm.confluxscan.com",
+      "currency": "CFX",
+      "type": "mainnet"
+    },
+    {
+      "id": 5000,
+      "name": "Mantle",
+      "shortName": "mnt",
+      "rpc": "https://rpc.mantle.xyz",
+      "explorer": "https://explorer.mantle.xyz",
+      "currency": "MNT",
+      "type": "mainnet"
+    },
+    {
+      "id": 169,
+      "name": "Manta Pacific",
+      "shortName": "manta",
+      "rpc": "https://pacific-rpc.manta.network/http",
+      "explorer": "https://pacific-explorer.manta.network",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 8217,
+      "name": "Klaytn",
+      "shortName": "klay",
+      "rpc": "https://public-node-api.klaytnapi.com/v1/cypress",
+      "explorer": "https://scope.klaytn.com",
+      "currency": "KLAY",
+      "type": "mainnet"
+    },
+    {
+      "id": 592,
+      "name": "Astar",
+      "shortName": "astar",
+      "rpc": "https://rpc.astar.network:8545",
+      "explorer": "https://astar.subscan.io",
+      "currency": "ASTR",
+      "type": "mainnet"
+    },
+    {
+      "id": 1116,
+      "name": "Core",
+      "shortName": "core",
+      "rpc": "https://rpc.coredao.org",
+      "explorer": "https://scan.coredao.org",
+      "currency": "CORE",
+      "type": "mainnet"
+    },
+    {
+      "id": 7777777,
+      "name": "Zora",
+      "shortName": "zora",
+      "rpc": "https://rpc.zora.energy",
+      "explorer": "https://explorer.zora.energy",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 534352,
+      "name": "Scroll",
+      "shortName": "scroll",
+      "rpc": "https://rpc.scroll.io",
+      "explorer": "https://scrollscan.com",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 570,
+      "name": "Rollux",
+      "shortName": "rollux",
+      "rpc": "https://rpc.rollux.com",
+      "explorer": "https://explorer.rollux.com",
+      "currency": "SYS",
+      "type": "mainnet"
+    },
+    {
+      "id": 2000,
+      "name": "Dogechain",
+      "shortName": "doge",
+      "rpc": "https://rpc.dogechain.dog",
+      "explorer": "https://explorer.dogechain.dog",
+      "currency": "DOGE",
+      "type": "mainnet"
+    },
+    {
+      "id": 1088,
+      "name": "Metis Andromeda",
+      "shortName": "metis-and",
+      "rpc": "https://andromeda.metis.io/?owner=1088",
+      "explorer": "https://andromeda-explorer.metis.io",
+      "currency": "METIS",
+      "type": "mainnet"
+    },
+    {
+      "id": 32659,
+      "name": "Fusion",
+      "shortName": "fsn",
+      "rpc": "https://mainnet.anyswap.exchange:8545",
+      "explorer": "https://www.fsnscan.com",
+      "currency": "FSN",
+      "type": "mainnet"
+    },
+    {
+      "id": 1890,
+      "name": "Lightlink Phoenix",
+      "shortName": "ll",
+      "rpc": "https://phoenix-rpc.lightlink.io/http",
+      "explorer": "https://phoenix.lightlink.io",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 7560,
+      "name": "Cyber",
+      "shortName": "cyber",
+      "rpc": "https://rpc.cyber.co",
+      "explorer": "https://cyberscan.co",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 204,
+      "name": "opBNB",
+      "shortName": "opbnb",
+      "rpc": "https://opbnb-mainnet-rpc.bnbchain.org",
+      "explorer": "https://opbnbscan.com",
+      "currency": "BNB",
+      "type": "mainnet"
+    },
+    {
+      "id": 5611,
+      "name": "opBNB Testnet",
+      "shortName": "opbnb-test",
+      "rpc": "https://opbnb-testnet-rpc.bnbchain.org",
+      "explorer": "https://testnet.opbnbscan.com",
+      "currency": "BNB",
+      "type": "testnet"
+    },
+    {
+      "id": 8844,
+      "name": "Berachain Artio",
+      "shortName": "berachain",
+      "rpc": "https://artio.rpc.berachain.com",
+      "explorer": "https://artio.berascan.com",
+      "currency": "BERA",
+      "type": "testnet"
+    },
+    {
+      "id": 6969,
+      "name": "Sepolia PGN",
+      "shortName": "pgn-sep",
+      "rpc": "https://sepolia.publicgoods.network",
+      "explorer": "https://sepolia-explorer.publicgoods.network",
+      "currency": "ETH",
+      "type": "testnet"
+    },
+    {
+      "id": 2522,
+      "name": "Fraxtal",
+      "shortName": "frax",
+      "rpc": "https://rpc.frax.com",
+      "explorer": "https://fraxscan.com",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 957,
+      "name": "Lyra Chain",
+      "shortName": "lyra",
+      "rpc": "https://rpc.lyra.finance",
+      "explorer": "https://explorer.lyra.finance",
+      "currency": "ETH",
+      "type": "mainnet"
+    },
+    {
+      "id": 666666666,
+      "name": "Degen",
+      "shortName": "degen",
+      "rpc": "https://rpc.degen.tips",
+      "explorer": "https://explorer.degen.tips",
+      "currency": "DEGEN",
+      "type": "mainnet"
+    },
+    {
+      "id": 7,
+      "name": "ThunderCore Testnet",
+      "shortName": "tt-test",
+      "rpc": "https://testnet-rpc.thundercore.com",
+      "explorer": "https://testnet-explorer.thundercore.com",
+      "currency": "TT",
+      "type": "testnet"
+    }
+  ]
+}
