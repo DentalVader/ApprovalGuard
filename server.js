@@ -114,10 +114,16 @@ app.get('/api/knowledge', (req, res) => {
 
 app.post('/api/approvals', async (req, res) => {
   try {
-    const { walletAddress } = req.body;
+    const { walletAddress, chainId } = req.body;
 
     if (!walletAddress || !ethers.isAddress(walletAddress)) {
       return res.status(400).json({ error: 'Invalid Ethereum address' });
+    }
+
+    // For now, only support Ethereum mainnet (chainId 1)
+    // In future, this can be extended to support other networks
+    if (chainId && chainId !== 1) {
+      return res.status(400).json({ error: 'Currently only Ethereum mainnet is supported' });
     }
 
     const approvalTopic = ethers.id("Approval(address,address,uint256)");
@@ -502,7 +508,9 @@ function getHtmlContent() {
 
         button:hover {
             transform: translateY(-2px);
+            -webkit-transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            -webkit-box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
         button:disabled {
@@ -590,8 +598,13 @@ function getHtmlContent() {
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); -webkit-transform: rotate(0deg); }
+            100% { transform: rotate(360deg); -webkit-transform: rotate(360deg); }
+        }
+        
+        @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
         }
 
         .results {
@@ -783,11 +796,14 @@ function getHtmlContent() {
             z-index: 1000;
             pointer-events: none;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            -webkit-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             opacity: 0;
             transition: opacity 0.1s ease-in-out;
+            -webkit-transition: opacity 0.1s ease-in-out;
             bottom: 100%;
             left: 50%;
             transform: translateX(-50%);
+            -webkit-transform: translateX(-50%);
             margin-bottom: 8px;
         }
 
@@ -1067,16 +1083,36 @@ function getHtmlContent() {
             }
         });
 
-        connectBtn.addEventListener('click', async () => {
+        function getNetworkInfo(chainId) {
+            const networks = {"1": {"id": 1, "name": "Ethereum", "shortName": "eth", "rpc": "https://eth-mainnet.g.alchemy.com/v2/", "explorer": "https://etherscan.io", "currency": "ETH", "type": "mainnet"}, "137": {"id": 137, "name": "Polygon", "shortName": "matic", "rpc": "https://polygon-mainnet.g.alchemy.com/v2/", "explorer": "https://polygonscan.com", "currency": "MATIC", "type": "mainnet"}, "42161": {"id": 42161, "name": "Arbitrum One", "shortName": "arb1", "rpc": "https://arb-mainnet.g.alchemy.com/v2/", "explorer": "https://arbiscan.io", "currency": "ETH", "type": "mainnet"}, "10": {"id": 10, "name": "Optimism", "shortName": "opt", "rpc": "https://opt-mainnet.g.alchemy.com/v2/", "explorer": "https://optimistic.etherscan.io", "currency": "ETH", "type": "mainnet"}, "8453": {"id": 8453, "name": "Base", "shortName": "base", "rpc": "https://base-mainnet.g.alchemy.com/v2/", "explorer": "https://basescan.org", "currency": "ETH", "type": "mainnet"}, "56": {"id": 56, "name": "BNB Smart Chain", "shortName": "bsc", "rpc": "https://bsc-dataseed.bnbchain.org:443", "explorer": "https://bscscan.com", "currency": "BNB", "type": "mainnet"}, "250": {"id": 250, "name": "Fantom", "shortName": "ftm", "rpc": "https://rpc.ftm.tools", "explorer": "https://ftmscan.com", "currency": "FTM", "type": "mainnet"}, "43114": {"id": 43114, "name": "Avalanche C-Chain", "shortName": "avax", "rpc": "https://api.avax.network/ext/bc/C/rpc", "explorer": "https://snowtrace.io", "currency": "AVAX", "type": "mainnet"}, "25": {"id": 25, "name": "Cronos", "shortName": "cro", "rpc": "https://evm.cronos.org", "explorer": "https://cronoscan.com", "currency": "CRO", "type": "mainnet"}, "1101": {"id": 1101, "name": "Polygon zkEVM", "shortName": "zkEVM", "rpc": "https://zkevm-rpc.com", "explorer": "https://zkevm.polygonscan.com", "currency": "ETH", "type": "mainnet"}, "324": {"id": 324, "name": "zkSync Era", "shortName": "zksync", "rpc": "https://mainnet.era.zksync.io", "explorer": "https://explorer.zksync.io", "currency": "ETH", "type": "mainnet"}, "59144": {"id": 59144, "name": "Linea", "shortName": "linea", "rpc": "https://rpc.linea.build", "explorer": "https://lineascan.com", "currency": "ETH", "type": "mainnet"}, "34443": {"id": 34443, "name": "Mode", "shortName": "mode", "rpc": "https://mainnet.mode.network", "explorer": "https://modescan.io", "currency": "ETH", "type": "mainnet"}, "7": {"id": 7, "name": "ThunderCore Testnet", "shortName": "tt-test", "rpc": "https://testnet-rpc.thundercore.com", "explorer": "https://testnet-explorer.thundercore.com", "currency": "TT", "type": "testnet"}, "288": {"id": 288, "name": "Boba Network", "shortName": "boba", "rpc": "https://mainnet.boba.network", "explorer": "https://bobascan.com", "currency": "ETH", "type": "mainnet"}, "100": {"id": 100, "name": "Gnosis Chain", "shortName": "gno", "rpc": "https://rpc.gnosischain.com", "explorer": "https://gnosisscan.io", "currency": "xDAI", "type": "mainnet"}, "1088": {"id": 1088, "name": "Metis Andromeda", "shortName": "metis-and", "rpc": "https://andromeda.metis.io/?owner=1088", "explorer": "https://andromeda-explorer.metis.io", "currency": "METIS", "type": "mainnet"}, "1284": {"id": 1284, "name": "Moonbeam", "shortName": "glmr", "rpc": "https://rpc.api.moonbeam.network", "explorer": "https://moonscan.io", "currency": "GLMR", "type": "mainnet"}, "1285": {"id": 1285, "name": "Moonriver", "shortName": "movr", "rpc": "https://rpc.api.moonriver.moonbeam.network", "explorer": "https://moonriver.moonscan.io", "currency": "MOVR", "type": "mainnet"}, "2222": {"id": 2222, "name": "Kava", "shortName": "kava", "rpc": "https://evm.kava.io", "explorer": "https://explorer.kava.io", "currency": "KAVA", "type": "mainnet"}, "106": {"id": 106, "name": "Velas", "shortName": "velas", "rpc": "https://evmexplorer.velas.com/rpc", "explorer": "https://evmexplorer.velas.com", "currency": "VLX", "type": "mainnet"}, "128": {"id": 128, "name": "Huobi ECO Chain", "shortName": "heco", "rpc": "https://http-mainnet.hecochain.com", "explorer": "https://hecoinfo.com", "currency": "HT", "type": "mainnet"}, "1313161554": {"id": 1313161554, "name": "Aurora", "shortName": "aurora", "rpc": "https://mainnet.aurora.dev", "explorer": "https://explorer.aurora.dev", "currency": "ETH", "type": "mainnet"}, "42220": {"id": 42220, "name": "Celo", "shortName": "celo", "rpc": "https://forno.celo.org", "explorer": "https://celoscan.io", "currency": "CELO", "type": "mainnet"}, "1666600000": {"id": 1666600000, "name": "Harmony One", "shortName": "one", "rpc": "https://api.harmony.one", "explorer": "https://explorer.harmony.one", "currency": "ONE", "type": "mainnet"}, "9001": {"id": 9001, "name": "Evmos", "shortName": "evmos", "rpc": "https://eth.bd.evmos.org:8545", "explorer": "https://escan.live", "currency": "EVMOS", "type": "mainnet"}, "11155111": {"id": 11155111, "name": "Ethereum Sepolia", "shortName": "sep", "rpc": "https://eth-sepolia.g.alchemy.com/v2/", "explorer": "https://sepolia.etherscan.io", "currency": "ETH", "type": "testnet"}, "80001": {"id": 80001, "name": "Polygon Mumbai", "shortName": "mumbai", "rpc": "https://polygon-mumbai.g.alchemy.com/v2/", "explorer": "https://mumbai.polygonscan.com", "currency": "MATIC", "type": "testnet"}, "421614": {"id": 421614, "name": "Arbitrum Sepolia", "shortName": "arb-sep", "rpc": "https://sepolia-rollup.arbitrum.io/rpc", "explorer": "https://sepolia.arbiscan.io", "currency": "ETH", "type": "testnet"}, "11155420": {"id": 11155420, "name": "Optimism Sepolia", "shortName": "opt-sep", "rpc": "https://sepolia.optimism.io", "explorer": "https://sepolia-optimistic.etherscan.io", "currency": "ETH", "type": "testnet"}, "84532": {"id": 84532, "name": "Base Sepolia", "shortName": "base-sep", "rpc": "https://sepolia.base.org", "explorer": "https://sepolia.basescan.org", "currency": "ETH", "type": "testnet"}, "97": {"id": 97, "name": "BNB Testnet", "shortName": "bsc-test", "rpc": "https://data-seed-prebsc-1-b.binance.org:8545", "explorer": "https://testnet.bscscan.com", "currency": "BNB", "type": "testnet"}, "4002": {"id": 4002, "name": "Fantom Testnet", "shortName": "ftm-test", "rpc": "https://rpc.testnet.fantom.network", "explorer": "https://testnet.ftmscan.com", "currency": "FTM", "type": "testnet"}, "43113": {"id": 43113, "name": "Avalanche Fuji", "shortName": "fuji", "rpc": "https://api.avax-test.network/ext/bc/C/rpc", "explorer": "https://testnet.snowtrace.io", "currency": "AVAX", "type": "testnet"}, "5": {"id": 5, "name": "Ethereum Goerli", "shortName": "gor", "rpc": "https://eth-goerli.g.alchemy.com/v2/", "explorer": "https://goerli.etherscan.io", "currency": "ETH", "type": "testnet"}, "7701": {"id": 7701, "name": "Canto", "shortName": "canto", "rpc": "https://mainnode.plexnode.org:8545", "explorer": "https://evm.explorer.canto.io", "currency": "CANTO", "type": "mainnet"}, "1030": {"id": 1030, "name": "Conflux eSpace", "shortName": "cfx", "rpc": "https://evm.confluxrpc.com", "explorer": "https://evm.confluxscan.com", "currency": "CFX", "type": "mainnet"}, "5000": {"id": 5000, "name": "Mantle", "shortName": "mnt", "rpc": "https://rpc.mantle.xyz", "explorer": "https://explorer.mantle.xyz", "currency": "MNT", "type": "mainnet"}, "169": {"id": 169, "name": "Manta Pacific", "shortName": "manta", "rpc": "https://pacific-rpc.manta.network/http", "explorer": "https://pacific-explorer.manta.network", "currency": "ETH", "type": "mainnet"}, "8217": {"id": 8217, "name": "Klaytn", "shortName": "klay", "rpc": "https://public-node-api.klaytnapi.com/v1/cypress", "explorer": "https://scope.klaytn.com", "currency": "KLAY", "type": "mainnet"}, "592": {"id": 592, "name": "Astar", "shortName": "astar", "rpc": "https://rpc.astar.network:8545", "explorer": "https://astar.subscan.io", "currency": "ASTR", "type": "mainnet"}, "1116": {"id": 1116, "name": "Core", "shortName": "core", "rpc": "https://rpc.coredao.org", "explorer": "https://scan.coredao.org", "currency": "CORE", "type": "mainnet"}, "7777777": {"id": 7777777, "name": "Zora", "shortName": "zora", "rpc": "https://rpc.zora.energy", "explorer": "https://explorer.zora.energy", "currency": "ETH", "type": "mainnet"}, "534352": {"id": 534352, "name": "Scroll", "shortName": "scroll", "rpc": "https://rpc.scroll.io", "explorer": "https://scrollscan.com", "currency": "ETH", "type": "mainnet"}, "570": {"id": 570, "name": "Rollux", "shortName": "rollux", "rpc": "https://rpc.rollux.com", "explorer": "https://explorer.rollux.com", "currency": "SYS", "type": "mainnet"}, "2000": {"id": 2000, "name": "Dogechain", "shortName": "doge", "rpc": "https://rpc.dogechain.dog", "explorer": "https://explorer.dogechain.dog", "currency": "DOGE", "type": "mainnet"}, "32659": {"id": 32659, "name": "Fusion", "shortName": "fsn", "rpc": "https://mainnet.anyswap.exchange:8545", "explorer": "https://www.fsnscan.com", "currency": "FSN", "type": "mainnet"}, "1890": {"id": 1890, "name": "Lightlink Phoenix", "shortName": "ll", "rpc": "https://phoenix-rpc.lightlink.io/http", "explorer": "https://phoenix.lightlink.io", "currency": "ETH", "type": "mainnet"}, "7560": {"id": 7560, "name": "Cyber", "shortName": "cyber", "rpc": "https://rpc.cyber.co", "explorer": "https://cyberscan.co", "currency": "ETH", "type": "mainnet"}, "204": {"id": 204, "name": "opBNB", "shortName": "opbnb", "rpc": "https://opbnb-mainnet-rpc.bnbchain.org", "explorer": "https://opbnbscan.com", "currency": "BNB", "type": "mainnet"}, "5611": {"id": 5611, "name": "opBNB Testnet", "shortName": "opbnb-test", "rpc": "https://opbnb-testnet-rpc.bnbchain.org", "explorer": "https://testnet.opbnbscan.com", "currency": "BNB", "type": "testnet"}, "8844": {"id": 8844, "name": "Berachain Artio", "shortName": "berachain", "rpc": "https://artio.rpc.berachain.com", "explorer": "https://artio.berascan.com", "currency": "BERA", "type": "testnet"}, "6969": {"id": 6969, "name": "Sepolia PGN", "shortName": "pgn-sep", "rpc": "https://sepolia.publicgoods.network", "explorer": "https://sepolia-explorer.publicgoods.network", "currency": "ETH", "type": "testnet"}, "2522": {"id": 2522, "name": "Fraxtal", "shortName": "frax", "rpc": "https://rpc.frax.com", "explorer": "https://fraxscan.com", "currency": "ETH", "type": "mainnet"}, "957": {"id": 957, "name": "Lyra Chain", "shortName": "lyra", "rpc": "https://rpc.lyra.finance", "explorer": "https://explorer.lyra.finance", "currency": "ETH", "type": "mainnet"}, "666666666": {"id": 666666666, "name": "Degen", "shortName": "degen", "rpc": "https://rpc.degen.tips", "explorer": "https://explorer.degen.tips", "currency": "DEGEN", "type": "mainnet"}};
+            return networks[chainId] || null;
+        }
+        
+                connectBtn.addEventListener('click', async () => {
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 connectedAddress = accounts[0];
                 walletInput.value = connectedAddress;
-                walletInfo.textContent = \`✓ Connected: \${connectedAddress.slice(0, 6)}...\${connectedAddress.slice(-4)}\`;
+                
+                // Get network info
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                const chainIdDecimal = parseInt(chainId, 16);
+                const networkInfo = getNetworkInfo(chainIdDecimal);
+                const networkDisplay = networkInfo ? \` • \${networkInfo.name}\` : '';
+                
+                walletInfo.textContent = \`✓ Connected: \${connectedAddress.slice(0, 6)}...\${connectedAddress.slice(-4)}\${networkDisplay}\`;
                 walletInfo.classList.add('connected');
                 connectBtn.textContent = 'Connected ✓';
                 connectBtn.disabled = true;
                 refreshBtn.style.display = 'block';
+                
+                // Listen for network changes
+                window.ethereum.on('chainChanged', (chainId) => {
+                    const newChainId = parseInt(chainId, 16);
+                    const newNetworkInfo = getNetworkInfo(newChainId);
+                    const newNetworkDisplay = newNetworkInfo ? \` • \${newNetworkInfo.name}\` : '';
+                    walletInfo.textContent = \`✓ Connected: \${connectedAddress.slice(0, 6)}...\${connectedAddress.slice(-4)}\${newNetworkDisplay}\`;
+                });
             } catch (error) {
                 showMessage('Failed to connect wallet', 'error');
             }
