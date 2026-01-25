@@ -1118,6 +1118,29 @@ function getHtmlContent() {
             }
         });
 
+        // Close About Modal
+        function closeAboutModal() {
+            document.getElementById('aboutModal').style.display = 'none';
+        }
+        
+        // Close Knowledge Modal
+        function closeKnowledgeModal() {
+            document.getElementById('knowledgeModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const aboutModal = document.getElementById('aboutModal');
+            const knowledgeModal = document.getElementById('knowledgeModal');
+            
+            if (event.target === aboutModal) {
+                aboutModal.style.display = 'none';
+            }
+            if (event.target === knowledgeModal) {
+                knowledgeModal.style.display = 'none';
+            }
+        }
+
         refreshBtn.addEventListener('click', () => {
             location.reload();
         });
@@ -1368,7 +1391,7 @@ function getHtmlContent() {
     <!-- About Modal -->
     <div id="aboutModal" class="modal">
         <div class="modal-content">
-            <span class="modal-close">&times;</span>
+            <span class="close-btn" onclick="closeAboutModal()">&times;</span>
             <div id="aboutContent"></div>
         </div>
     </div>
@@ -1376,7 +1399,7 @@ function getHtmlContent() {
     <!-- Knowledge Modal -->
     <div id="knowledgeModal" class="modal">
         <div class="modal-content">
-            <span class="modal-close-knowledge">&times;</span>
+            <span class="close-btn" onclick="closeKnowledgeModal()">&times;</span>
             <div id="knowledgeContent"></div>
         </div>
     </div>
