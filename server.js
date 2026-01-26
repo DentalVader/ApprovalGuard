@@ -1088,33 +1088,148 @@ function getHtmlContent() {
             return networks[chainId] || null;
         }
         
+                // Mobile detection
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        
+        // Wallet deep links for mobile
+        const walletDeepLinks = {
+            metamask: 'https://metamask.app.link/dapp/',
+            trustwallet: 'https://link.trustwallet.com/open_url?url=',
+            coinbase: 'https://go.cb-w.com/dapp?cb_url=',
+            walletconnect: 'wc:'
+        };
+        
+        function openWalletOnMobile() {
+            const currentUrl = window.location.href;
+            const isMobile = isMobileDevice();
+            
+            if (!isMobile) {
+                // Desktop: Show QR code
+                showWalletConnectModal();
+                return;
+            }
+            
+            // Mobile: Try to open wallet app
+            // Try MetaMask first
+            const metamaskDeepLink = walletDeepLinks.metamask + encodeURIComponent(currentUrl);
+            
+            // Create a timeout to detect if app opened
+            let appOpened = false;
+            const timer = setTimeout(() => {
+                if (!appOpened) {
+                    // If no app opened, show fallback message
+                    showMessage('Please install MetaMask, Trust Wallet, or another Web3 wallet app', 'error');
+                }
+            }, 1500);
+            
+            // Try to open MetaMask
+            window.location.href = metamaskDeepLink;
+            appOpened = true;
+            clearTimeout(timer);
+        }
+        
+        // WalletConnect initialization for desktop
+        let provider = null;
+        
+        function showWalletConnectModal() {
+            document.getElementById('walletConnectModal').style.display = 'block';
+            initWalletConnect();
+        }
+        
+        function closeWalletConnectModal() {
+            document.getElementById('walletConnectModal').style.display = 'none';
+        }
+        
+        async function initWalletConnect() {
+            try {
+                provider = new WalletConnectProvider.default({
+                    infuraId: "8043bb2cf99347b1bfadfb3c6cdcf93d"
+                });
+                
+                // Get URI for QR code
+                await provider.enable();
+                
+                // Generate QR code
+                const uri = provider.connector.uri;
+                const qrcodeContainer = document.getElementById('qrcodeContainer');
+                qrcodeContainer.innerHTML = '';
+                
+                QRCode.toCanvas(qrcodeContainer, uri, {
+                    errorCorrectionLevel: 'H',
+                    type: 'image/jpeg',
+                    quality: 0.92,
+                    margin: 1,
+                    width: 200,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    }
+                }, function (error) {
+                    if (error) console.error(error);
+                });
+                
+                // Get connected account
+                const accounts = await provider.request({ method: 'eth_accounts' });
+                if (accounts && accounts.length > 0) {
+                    connectedAddress = accounts[0];
+                    walletInput.value = connectedAddress;
+                    
+                    // Get network info
+                    const chainId = await provider.request({ method: 'eth_chainId' });
+                    const chainIdDecimal = parseInt(chainId, 16);
+                    const networkInfo = getNetworkInfo(chainIdDecimal);
+                    const networkDisplay = networkInfo ? \` • \${networkInfo.name}\` : '';
+                    
+                    walletInfo.textContent = \`✓ Connected: \${connectedAddress.slice(0, 6)}...\${connectedAddress.slice(-4)}\${networkDisplay}\`;
+                    walletInfo.classList.add('connected');
+                    connectBtn.textContent = 'Connected ✓';
+                    connectBtn.disabled = true;
+                    refreshBtn.style.display = 'block';
+                    
+                    closeWalletConnectModal();
+                }
+            } catch (error) {
+                console.error('WalletConnect error:', error);
+                showMessage('Failed to connect with WalletConnect', 'error');
+            }
+        }
+        
                 connectBtn.addEventListener('click', async () => {
             try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                connectedAddress = accounts[0];
-                walletInput.value = connectedAddress;
-                
-                // Get network info
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                const chainIdDecimal = parseInt(chainId, 16);
-                const networkInfo = getNetworkInfo(chainIdDecimal);
-                const networkDisplay = networkInfo ? \` • \${networkInfo.name}\` : '';
-                
-                walletInfo.textContent = \`✓ Connected: \${connectedAddress.slice(0, 6)}...\${connectedAddress.slice(-4)}\${networkDisplay}\`;
-                walletInfo.classList.add('connected');
-                connectBtn.textContent = 'Connected ✓';
-                connectBtn.disabled = true;
-                refreshBtn.style.display = 'block';
-                
-                // Listen for network changes
-                window.ethereum.on('chainChanged', (chainId) => {
-                    const newChainId = parseInt(chainId, 16);
-                    const newNetworkInfo = getNetworkInfo(newChainId);
-                    const newNetworkDisplay = newNetworkInfo ? \` • \${newNetworkInfo.name}\` : '';
-                    walletInfo.textContent = \`✓ Connected: \${connectedAddress.slice(0, 6)}...\${connectedAddress.slice(-4)}\${newNetworkDisplay}\`;
-                });
+                // Try window.ethereum first (browser extension)
+                if (window.ethereum) {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    connectedAddress = accounts[0];
+                    walletInput.value = connectedAddress;
+                    
+                    // Get network info
+                    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                    const chainIdDecimal = parseInt(chainId, 16);
+                    const networkInfo = getNetworkInfo(chainIdDecimal);
+                    const networkDisplay = networkInfo ? \` • \${networkInfo.name}\` : '';
+                    
+                    walletInfo.textContent = \`✓ Connected: \${connectedAddress.slice(0, 6)}...\${connectedAddress.slice(-4)}\${networkDisplay}\`;
+                    walletInfo.classList.add('connected');
+                    connectBtn.textContent = 'Connected ✓';
+                    connectBtn.disabled = true;
+                    refreshBtn.style.display = 'block';
+                    
+                    // Listen for network changes
+                    window.ethereum.on('chainChanged', (chainId) => {
+                        const newChainId = parseInt(chainId, 16);
+                        const newNetworkInfo = getNetworkInfo(newChainId);
+                        const newNetworkDisplay = newNetworkInfo ? \` • \${newNetworkInfo.name}\` : '';
+                        walletInfo.textContent = \`✓ Connected: \${connectedAddress.slice(0, 6)}...\${connectedAddress.slice(-4)}\${newNetworkDisplay}\`;
+                    });
+                } else {
+                    // Fallback to mobile deep link or WalletConnect
+                    openWalletOnMobile();
+                }
             } catch (error) {
-                showMessage('Failed to connect wallet', 'error');
+                // If extension fails, try mobile deep link or WalletConnect
+                openWalletOnMobile();
             }
         });
 
