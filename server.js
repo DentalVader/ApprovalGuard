@@ -6,26 +6,12 @@ const { ethers } = require('ethers');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const Sentry = require('@sentry/node');
 const rateLimit = require('express-rate-limit');
-const { Amplitude } = require('@amplitude/node');
 
 const app = express();
 const PORT = 5176;
 
-// Initialize Sentry for error tracking
-const SENTRY_DSN = process.env.SENTRY_DSN;
-if (SENTRY_DSN) {
-  Sentry.init({ dsn: SENTRY_DSN, environment: process.env.NODE_ENV || 'production' });
-  app.use(Sentry.Handlers.requestHandler());
-}
 
-// Initialize Amplitude for analytics
-const AMPLITUDE_API_KEY = process.env.AMPLITUDE_API_KEY;
-let amplitudeClient = null;
-if (AMPLITUDE_API_KEY) {
-  amplitudeClient = new Amplitude(AMPLITUDE_API_KEY);
-}
 
 // Structured logging utility
 const logger = {
@@ -69,20 +55,6 @@ const approvalsLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Track analytics event
-function trackEvent(eventName, userId, eventProperties = {}) {
-  if (!amplitudeClient) return;
-  try {
-    amplitudeClient.track({
-      event_type: eventName,
-      user_id: userId || 'anonymous',
-      event_properties: eventProperties,
-      timestamp: Date.now()
-    });
-  } catch (err) {
-    logger.error('Failed to track analytics event', { eventName, error: err.message });
-  }
-}
 
 const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
@@ -196,12 +168,12 @@ app.post('/api/approvals', approvalsLimiter, async (req, res) => {
 
     if (!walletAddress || !ethers.isAddress(walletAddress)) {
       logger.warn('Invalid address submitted', { walletAddress, ip: clientIp });
-      trackEvent('approval_scan_failed', walletAddress, { reason: 'invalid_address' });
+
       return res.status(400).json({ error: 'Invalid Ethereum address' });
     }
 
     logger.info('Approval scan initiated', { walletAddress: walletAddress.slice(0, 10) + '...', chainId, ip: clientIp });
-    trackEvent('approval_scan_started', walletAddress, { chainId });
+
 
 
     // For now, only support Ethereum mainnet (chainId 1)
@@ -293,7 +265,7 @@ app.post('/api/approvals', approvalsLimiter, async (req, res) => {
     const detailedApprovals = (await Promise.all(approvalPromises)).filter(Boolean);
 
     logger.info('Approval scan completed', { walletAddress: walletAddress.slice(0, 10) + '...', count: detailedApprovals.length });
-    trackEvent('approval_scan_completed', walletAddress, { count: detailedApprovals.length, chainId });
+
 
     res.json({
       success: true,
@@ -303,8 +275,8 @@ app.post('/api/approvals', approvalsLimiter, async (req, res) => {
 
   } catch (error) {
     logger.error('Approval scan failed', { walletAddress: walletAddress?.slice(0, 10) + '...', error: error.message });
-    trackEvent('approval_scan_error', walletAddress, { error: error.message });
-    Sentry.captureException(error);
+
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -483,7 +455,7 @@ function getApprovalDescription(contractName) {
   return 'This contract can transfer your tokens.';
 }
 
-app.use(Sentry.Handlers.errorHandler());
+
 
 app.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════╗');
@@ -491,7 +463,7 @@ app.listen(PORT, () => {
   console.log('║   Professional Token Approval Manager   ║');
   console.log('╚════════════════════════════════════════╝\n');
   console.log(`Server running at http://localhost:${PORT}\n`);
-  console.log(`Monitoring: Sentry ${SENTRY_DSN ? 'ON' : 'OFF'} | Analytics ${AMPLITUDE_API_KEY ? 'ON' : 'OFF'}\n`);
+
 });
 
 function getHtmlContent() {
