@@ -6,66 +6,17 @@ const { ethers } = require('ethers');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = 5176;
-
-
-
-// Structured logging utility
-const logger = {
-  info: (message, data = {}) => {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] INFO: ${message}`, data);
-    logToFile('info', message, data);
-  },
-  error: (message, error = {}) => {
-    const timestamp = new Date().toISOString();
-    console.error(`[${timestamp}] ERROR: ${message}`, error);
-    logToFile('error', message, error);
-  },
-  warn: (message, data = {}) => {
-    const timestamp = new Date().toISOString();
-    console.warn(`[${timestamp}] WARN: ${message}`, data);
-    logToFile('warn', message, data);
-  }
-};
-
-// Log to file
-function logToFile(level, message, data) {
-  try {
-    const logDir = path.join(__dirname, 'logs');
-    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
-    const logFile = path.join(logDir, `${level}.log`);
-    const timestamp = new Date().toISOString();
-    const logEntry = `[${timestamp}] ${message} ${JSON.stringify(data)}\n`;
-    fs.appendFileSync(logFile, logEntry);
-  } catch (err) {
-    console.error('Failed to write to log file:', err);
-  }
-}
-
-// Rate limiting middleware
-const approvalsLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 
 const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
 if (!ALCHEMY_API_KEY || !ETHERSCAN_API_KEY) {
-  logger.error('Missing required API keys', { ALCHEMY_API_KEY: !!ALCHEMY_API_KEY, ETHERSCAN_API_KEY: !!ETHERSCAN_API_KEY });
+  console.error('❌ Error: Missing ALCHEMY_API_KEY or ETHERSCAN_API_KEY in .env file');
   process.exit(1);
 }
-
-logger.info('ApprovalGuard.io starting', { PORT });
-
 
 const provider = new ethers.JsonRpcProvider(
   `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`
@@ -161,20 +112,13 @@ app.get('/api/knowledge', (req, res) => {
   }
 });
 
-app.post('/api/approvals', approvalsLimiter, async (req, res) => {
+app.post('/api/approvals', async (req, res) => {
   try {
     const { walletAddress, chainId } = req.body;
-    const clientIp = req.ip || req.connection.remoteAddress;
 
     if (!walletAddress || !ethers.isAddress(walletAddress)) {
-      logger.warn('Invalid address submitted', { walletAddress, ip: clientIp });
-
       return res.status(400).json({ error: 'Invalid Ethereum address' });
     }
-
-    logger.info('Approval scan initiated', { walletAddress: walletAddress.slice(0, 10) + '...', chainId, ip: clientIp });
-
-
 
     // For now, only support Ethereum mainnet (chainId 1)
     // In future, this can be extended to support other networks
@@ -264,23 +208,16 @@ app.post('/api/approvals', approvalsLimiter, async (req, res) => {
 
     const detailedApprovals = (await Promise.all(approvalPromises)).filter(Boolean);
 
-    logger.info('Approval scan completed', { walletAddress: walletAddress.slice(0, 10) + '...', count: detailedApprovals.length });
-
-
     res.json({
       success: true,
       count: detailedApprovals.length,
       approvals: detailedApprovals
     });
-
   } catch (error) {
-    logger.error('Approval scan failed', { walletAddress: walletAddress?.slice(0, 10) + '...', error: error.message });
-
-
+    console.error('Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
-
 
 /**
  * Calculate risk score (0-100) for an approval
@@ -455,15 +392,12 @@ function getApprovalDescription(contractName) {
   return 'This contract can transfer your tokens.';
 }
 
-
-
 app.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════╗');
   console.log('║     ApprovalGuard.io - MVP v3.0.0      ║');
   console.log('║   Professional Token Approval Manager   ║');
   console.log('╚════════════════════════════════════════╝\n');
-  console.log(`Server running at http://localhost:${PORT}\n`);
-
+  console.log(`🚀 Server running at http://localhost:${PORT}\n`  );
 });
 
 function getHtmlContent() {
