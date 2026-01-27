@@ -952,6 +952,522 @@ function getHtmlContent() {
         .exploit-warning li {
             margin: 4px 0;
         }
+        
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                max-width: 100%;
+            }
+            
+            .header h1 {
+                font-size: 22px;
+                margin-bottom: 8px;
+            }
+            
+            .header p {
+                font-size: 13px;
+                margin-bottom: 10px;
+            }
+            
+            .about-btn {
+                padding: 4px 10px;
+                font-size: 12px;
+            }
+            
+            .wallet-section {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .wallet-info {
+                width: 100%;
+                font-size: 13px;
+                padding: 12px;
+                white-space: normal;
+                word-break: break-word;
+                text-align: center;
+            }
+            
+            .input-section {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .wallet-input {
+                width: 100%;
+                font-size: 14px;
+                padding: 12px;
+            }
+            
+            #connectBtn,
+            #fetchBtn,
+            #refreshBtn {
+                width: 100%;
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            
+            .approval-card {
+                padding: 15px;
+                margin-bottom: 12px;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .card-header h3 {
+                font-size: 15px;
+                width: 100%;
+            }
+            
+            .badge {
+                font-size: 11px;
+                padding: 3px 10px;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 10px 0;
+            }
+            
+            .detail-label {
+                margin-bottom: 4px;
+                font-size: 12px;
+            }
+            
+            .detail-value {
+                font-size: 12px;
+                text-align: left;
+                margin-left: 0;
+                word-break: break-word;
+            }
+            
+            .modal-content {
+                width: 95%;
+                max-width: 95%;
+                padding: 20px;
+                margin: 10% auto;
+                max-height: 80vh;
+            }
+            
+            .risk-factors-list {
+                flex-direction: column;
+            }
+            
+            .risk-factor-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 10px;
+            }
+            
+            .factor-name {
+                margin-bottom: 4px;
+                min-width: auto;
+            }
+            
+            .factor-value {
+                text-align: left;
+                margin-bottom: 4px;
+            }
+            
+            .factor-contribution {
+                text-align: left;
+                min-width: auto;
+            }
+            
+            .revoke-btn {
+                width: 100%;
+                padding: 12px;
+                margin-top: 12px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 12px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+                margin-bottom: 6px;
+            }
+            
+            .header p {
+                font-size: 12px;
+                margin-bottom: 8px;
+            }
+            
+            .about-btn {
+                padding: 3px 8px;
+                font-size: 11px;
+            }
+            
+            .wallet-info {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .wallet-input {
+                font-size: 13px;
+                padding: 10px;
+            }
+            
+            #connectBtn,
+            #fetchBtn,
+            #refreshBtn {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .approval-card {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+            
+            .card-header h3 {
+                font-size: 14px;
+            }
+            
+            .badge {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+            
+            .approval-description {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .card-details {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .detail-row {
+                padding: 8px 0;
+            }
+            
+            .detail-label {
+                font-size: 11px;
+            }
+            
+            .detail-value {
+                font-size: 11px;
+            }
+            
+            .risks-benefits {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .risks-list h4,
+            .benefits-list h4 {
+                font-size: 11px;
+            }
+            
+            .risks-list li,
+            .benefits-list li {
+                font-size: 11px;
+            }
+            
+            .risk-factors-section {
+                padding: 10px;
+            }
+            
+            .risk-factors-section h4 {
+                font-size: 12px;
+            }
+            
+            .risk-factor-item {
+                padding: 8px;
+                font-size: 11px;
+            }
+            
+            .modal-content {
+                width: 98%;
+                max-width: 98%;
+                padding: 15px;
+                margin: 20% auto;
+                font-size: 13px;
+            }
+            
+            .exploit-warning {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .revoke-btn {
+                padding: 10px;
+                font-size: 13px;
+                margin-top: 10px;
+            }
+        }
+        
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                max-width: 100%;
+            }
+            
+            .header h1 {
+                font-size: 22px;
+                margin-bottom: 8px;
+            }
+            
+            .header p {
+                font-size: 13px;
+                margin-bottom: 10px;
+            }
+            
+            .about-btn {
+                padding: 4px 10px;
+                font-size: 12px;
+            }
+            
+            .wallet-section {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .wallet-info {
+                width: 100%;
+                font-size: 13px;
+                padding: 12px;
+                white-space: normal;
+                word-break: break-word;
+                text-align: center;
+            }
+            
+            .input-section {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .wallet-input {
+                width: 100%;
+                font-size: 14px;
+                padding: 12px;
+            }
+            
+            #connectBtn,
+            #fetchBtn,
+            #refreshBtn {
+                width: 100%;
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            
+            .approval-card {
+                padding: 15px;
+                margin-bottom: 12px;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .card-header h3 {
+                font-size: 15px;
+                width: 100%;
+            }
+            
+            .badge {
+                font-size: 11px;
+                padding: 3px 10px;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 10px 0;
+            }
+            
+            .detail-label {
+                margin-bottom: 4px;
+                font-size: 12px;
+            }
+            
+            .detail-value {
+                font-size: 12px;
+                text-align: left;
+                margin-left: 0;
+                word-break: break-word;
+            }
+            
+            .modal-content {
+                width: 95%;
+                max-width: 95%;
+                padding: 20px;
+                margin: 10% auto;
+                max-height: 80vh;
+            }
+            
+            .risk-factors-list {
+                flex-direction: column;
+            }
+            
+            .risk-factor-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 10px;
+            }
+            
+            .factor-name {
+                margin-bottom: 4px;
+                min-width: auto;
+            }
+            
+            .factor-value {
+                text-align: left;
+                margin-bottom: 4px;
+            }
+            
+            .factor-contribution {
+                text-align: left;
+                min-width: auto;
+            }
+            
+            .revoke-btn {
+                width: 100%;
+                padding: 12px;
+                margin-top: 12px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 12px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+                margin-bottom: 6px;
+            }
+            
+            .header p {
+                font-size: 12px;
+                margin-bottom: 8px;
+            }
+            
+            .about-btn {
+                padding: 3px 8px;
+                font-size: 11px;
+            }
+            
+            .wallet-info {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .wallet-input {
+                font-size: 13px;
+                padding: 10px;
+            }
+            
+            #connectBtn,
+            #fetchBtn,
+            #refreshBtn {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .approval-card {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+            
+            .card-header h3 {
+                font-size: 14px;
+            }
+            
+            .badge {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+            
+            .approval-description {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .card-details {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .detail-row {
+                padding: 8px 0;
+            }
+            
+            .detail-label {
+                font-size: 11px;
+            }
+            
+            .detail-value {
+                font-size: 11px;
+            }
+            
+            .risks-benefits {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .risks-list h4,
+            .benefits-list h4 {
+                font-size: 11px;
+            }
+            
+            .risks-list li,
+            .benefits-list li {
+                font-size: 11px;
+            }
+            
+            .risk-factors-section {
+                padding: 10px;
+            }
+            
+            .risk-factors-section h4 {
+                font-size: 12px;
+            }
+            
+            .risk-factor-item {
+                padding: 8px;
+                font-size: 11px;
+            }
+            
+            .modal-content {
+                width: 98%;
+                max-width: 98%;
+                padding: 15px;
+                margin: 20% auto;
+                font-size: 13px;
+            }
+            
+            .exploit-warning {
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            .revoke-btn {
+                padding: 10px;
+                font-size: 13px;
+                margin-top: 10px;
+            }
+        }
     </style>
 </head>
 <body>
