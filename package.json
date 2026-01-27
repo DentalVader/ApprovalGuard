@@ -17,8 +17,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@sentry/node": "^8.0.0",
-    "@amplitude/node": "^1.11.0",
     "axios": "^1.13.2",
     "dotenv": "^16.4.5",
     "ethers": "^6.7.1",
