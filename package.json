@@ -17,9 +17,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@amplitude/node": "^1.10.0",
+    "@sentry/node": "^7.91.0",
     "axios": "^1.13.2",
     "dotenv": "^16.4.5",
     "ethers": "^6.7.1",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.1.5"
   }
 }
