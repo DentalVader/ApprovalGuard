@@ -405,6 +405,7 @@ function getHtmlContent() {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://cdn.eu.amplitude.com/script/e1e12fbdc43572ec10859e26f09dcdeb.js"></script><script>window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));window.amplitude.init('e1e12fbdc43572ec10859e26f09dcdeb', {"fetchRemoteConfig":true,"serverZone":"EU","autocapture":{"attribution":true,"fileDownloads":true,"formInteractions":true,"pageViews":true,"sessions":true,"elementInteractions":true,"networkTracking":true,"webVitals":true,"frustrationInteractions":true}});</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ApprovalGuard.io</title>
