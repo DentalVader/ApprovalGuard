@@ -1917,7 +1917,7 @@ function getHtmlContent() {
                 console.error('WalletConnect error:', error);
                 showMessage('Failed to connect with WalletConnect', 'error');
             }
-        }
+        });
         
                 connectBtn.addEventListener('click', async () => {
             try {
