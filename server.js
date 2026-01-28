@@ -1657,7 +1657,7 @@ function getHtmlContent() {
         <button id="refreshBtn" class="refresh-btn" style="display: none;">Refresh to Disconnect/Other Wallet</button>
 
         <!-- Email Subscription Section -->
-        <div id="subscriptionSection" class="subscription-section" style="display: none;">
+        <div id="subscriptionSection" class="subscription-section">
             <div class="subscription-container">
                 <h3>Stay Updated</h3>
                 <p>Get notified about new features and security updates</p>
