@@ -392,6 +392,52 @@ function getApprovalDescription(contractName) {
   return 'This contract can transfer your tokens.';
 }
 
+// Email subscription endpoint
+app.post('/api/subscribe', (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email address' });
+    }
+    
+    // Path to subscribers file
+    const subscribersPath = path.join(__dirname, 'subscribers.json');
+    
+    // Read existing subscribers
+    let subscribers = [];
+    try {
+      const data = fs.readFileSync(subscribersPath, 'utf8');
+      subscribers = JSON.parse(data);
+    } catch (e) {
+      // File doesn't exist yet, start with empty array
+      subscribers = [];
+    }
+    
+    // Check if email already exists
+    if (subscribers.some(sub => sub.email.toLowerCase() === email.toLowerCase())) {
+      return res.json({ success: true, message: 'Already subscribed' });
+    }
+    
+    // Add new subscriber with timestamp
+    subscribers.push({
+      email: email.toLowerCase(),
+      subscribedAt: new Date().toISOString()
+    });
+    
+    // Save to file
+    fs.writeFileSync(subscribersPath, JSON.stringify(subscribers, null, 2));
+    
+    console.log(`✓ New subscriber: ${email}`);
+    res.json({ success: true, message: 'Thank you for subscribing!' });
+  } catch (error) {
+    console.error('Error in /api/subscribe:', error);
+    res.status(500).json({ error: 'Failed to subscribe' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════╗');
   console.log('║     ApprovalGuard.io - MVP v3.0.0      ║');
@@ -840,6 +886,92 @@ function getHtmlContent() {
             padding: 12px 24px;
         }
         
+        .subscription-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+            border-radius: 12px;
+            border-left: 4px solid #5055e8ff;
+        }
+
+        .subscription-container {
+            max-width: 500px;
+        }
+
+        .subscription-container h3 {
+            color: #1a1a1a;
+            font-size: 18px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .subscription-container p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .subscription-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .subscription-form input[type="email"] {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            color: #1a1a1a;
+        }
+
+        .subscription-form input[type="email"]:focus {
+            outline: none;
+            border-color: #5055e8ff;
+            box-shadow: 0 0 0 3px rgba(80, 85, 232, 0.1);
+        }
+
+        .subscribe-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #5055e8ff 0%, #4ba288ff 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .subscribe-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(80, 85, 232, 0.3);
+        }
+
+        .subscribe-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .subscription-message {
+            font-size: 13px;
+            padding: 8px 0;
+            min-height: 20px;
+        }
+
+        .subscription-message.success {
+            color: #4caf50;
+            font-weight: 500;
+        }
+
+        .subscription-message.error {
+            color: #ff6b6b;
+            font-weight: 500;
+        }
+        
         /* Modal Styles */
         .modal {
             display: none;
@@ -1210,6 +1342,21 @@ function getHtmlContent() {
                 font-size: 13px;
                 margin-top: 10px;
             }
+            
+            .subscription-section {
+                padding: 15px;
+                margin-top: 20px;
+            }
+            
+            .subscription-form {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .subscribe-btn {
+                width: 100%;
+                padding: 12px;
+            }
         }
         
         /* Mobile Responsive Design */
@@ -1508,6 +1655,19 @@ function getHtmlContent() {
         </div>
 
         <button id="refreshBtn" class="refresh-btn" style="display: none;">Refresh to Disconnect/Other Wallet</button>
+
+        <!-- Email Subscription Section -->
+        <div id="subscriptionSection" class="subscription-section" style="display: none;">
+            <div class="subscription-container">
+                <h3>Stay Updated</h3>
+                <p>Get notified about new features and security updates</p>
+                <form id="subscriptionForm" class="subscription-form">
+                    <input type="email" id="subscriptionEmail" placeholder="Enter your email" required />
+                    <button type="submit" class="subscribe-btn">Subscribe</button>
+                </form>
+                <div id="subscriptionMessage" class="subscription-message"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1524,6 +1684,10 @@ function getHtmlContent() {
         const aboutBtn = document.getElementById('aboutBtn');
         const knowledgeBtn = document.getElementById('knowledgeBtn');
         const clearIcon = document.getElementById('clearIcon');
+        const subscriptionForm = document.getElementById('subscriptionForm');
+        const subscriptionEmail = document.getElementById('subscriptionEmail');
+        const subscriptionMessage = document.getElementById('subscriptionMessage');
+        const subscriptionSection = document.getElementById('subscriptionSection');
 
         let connectedAddress = null;
         
@@ -1555,7 +1719,49 @@ function getHtmlContent() {
                 content.innerHTML = '<p>Unable to load knowledge content</p>';
                 modal.style.display = 'block';
             }
+        
+        // Subscription form handler
+        subscriptionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = subscriptionEmail.value.trim();
+            
+            if (!email) {
+                showSubscriptionMessage('Please enter your email', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSubscriptionMessage(data.message, 'success');
+                    subscriptionEmail.value = '';
+                } else {
+                    showSubscriptionMessage(data.error || 'Subscription failed', 'error');
+                }
+            } catch (error) {
+                console.error('Subscription error:', error);
+                showSubscriptionMessage('Failed to subscribe. Please try again.', 'error');
+            }
         });
+        
+        function showSubscriptionMessage(text, type) {
+            subscriptionMessage.textContent = text;
+            subscriptionMessage.className = \`subscription-message \${type}\`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    subscriptionMessage.textContent = '';
+                    subscriptionMessage.className = 'subscription-message';
+                }, 3000);
+            }
+        }
         
         const modalCloseKnowledge = document.querySelector('.modal-close-knowledge');
         if (modalCloseKnowledge) {
