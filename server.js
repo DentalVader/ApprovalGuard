@@ -1719,6 +1719,7 @@ function getHtmlContent() {
                 content.innerHTML = '<p>Unable to load knowledge content</p>';
                 modal.style.display = 'block';
             }
+        });
         
         // Subscription form handler
         subscriptionForm.addEventListener('submit', async (e) => {
