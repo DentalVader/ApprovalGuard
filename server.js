@@ -113,6 +113,11 @@ app.get('/api/knowledge', (req, res) => {
 });
 
 app.post('/api/subscribe', (req, res) => {
+  // Prevent caching
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  
   try {
     const { email } = req.body;
     
