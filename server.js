@@ -112,6 +112,51 @@ app.get('/api/knowledge', (req, res) => {
   }
 });
 
+app.post('/api/subscribe', (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email address' });
+    }
+    
+    // Path to subscribers file
+    const subscribersPath = path.join(__dirname, 'subscribers.json');
+    
+    // Read existing subscribers
+    let subscribers = [];
+    try {
+      const data = fs.readFileSync(subscribersPath, 'utf8');
+      subscribers = JSON.parse(data);
+    } catch (e) {
+      // File doesn't exist yet, start with empty array
+      subscribers = [];
+    }
+    
+    // Check if email already exists
+    if (subscribers.some(sub => sub.email.toLowerCase() === email.toLowerCase())) {
+      return res.json({ success: true, message: 'Already subscribed' });
+    }
+    
+    // Add new subscriber with timestamp
+    subscribers.push({
+      email: email.toLowerCase(),
+      subscribedAt: new Date().toISOString()
+    });
+    
+    // Save to file
+    fs.writeFileSync(subscribersPath, JSON.stringify(subscribers, null, 2));
+    
+    console.log(`✓ New subscriber: ${email}`);
+    res.json({ success: true, message: 'Thank you for subscribing!' });
+  } catch (error) {
+    console.error('Error in /api/subscribe:', error);
+    res.status(500).json({ error: 'Failed to subscribe' });
+  }
+});
+
 app.post('/api/approvals', async (req, res) => {
   try {
     const { walletAddress, chainId } = req.body;
@@ -1469,6 +1514,106 @@ function getHtmlContent() {
                 margin-top: 10px;
             }
         }
+
+        .subscription-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);
+            border-left: 4px solid #6366f1;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .subscription-container h3 {
+            color: #1f2937;
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .subscription-container p {
+            color: #6b7280;
+            margin: 0 0 16px 0;
+            font-size: 14px;
+        }
+
+        .subscription-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        #subscriptionEmail {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        #subscriptionEmail:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .subscribe-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .subscribe-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .subscribe-btn:active {
+            transform: translateY(0);
+        }
+
+        .subscription-message {
+            font-size: 13px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .subscription-message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .subscription-message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        @media (max-width: 768px) {
+            .subscription-section {
+                padding: 16px;
+                margin: 16px 0;
+            }
+
+            .subscription-form {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .subscribe-btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1508,6 +1653,19 @@ function getHtmlContent() {
         </div>
 
         <button id="refreshBtn" class="refresh-btn" style="display: none;">Refresh to Disconnect/Other Wallet</button>
+
+        <!-- Email Subscription Section -->
+        <div id="subscriptionSection" class="subscription-section">
+            <div class="subscription-container">
+                <h3>Stay Updated</h3>
+                <p>Get notified about new features and security updates</p>
+                <form id="subscriptionForm" class="subscription-form">
+                    <input type="email" id="subscriptionEmail" placeholder="Enter your email" required />
+                    <button type="submit" class="subscribe-btn">Subscribe</button>
+                </form>
+                <div id="subscriptionMessage" class="subscription-message"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1524,6 +1682,9 @@ function getHtmlContent() {
         const aboutBtn = document.getElementById('aboutBtn');
         const knowledgeBtn = document.getElementById('knowledgeBtn');
         const clearIcon = document.getElementById('clearIcon');
+        const subscriptionForm = document.getElementById('subscriptionForm');
+        const subscriptionEmail = document.getElementById('subscriptionEmail');
+        const subscriptionMessage = document.getElementById('subscriptionMessage');
 
         let connectedAddress = null;
         
@@ -2018,6 +2179,49 @@ function getHtmlContent() {
         walletInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') fetchBtn.click();
         });
+
+        // Subscription form handler
+        subscriptionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = subscriptionEmail.value.trim();
+            
+            if (!email) {
+                showSubscriptionMessage('Please enter your email', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSubscriptionMessage(data.message, 'success');
+                    subscriptionEmail.value = '';
+                } else {
+                    showSubscriptionMessage(data.error || 'Subscription failed', 'error');
+                }
+            } catch (error) {
+                console.error('Subscription error:', error);
+                showSubscriptionMessage('Failed to subscribe. Please try again.', 'error');
+            }
+        });
+        
+        function showSubscriptionMessage(text, type) {
+            subscriptionMessage.textContent = text;
+            subscriptionMessage.className = \`subscription-message \${type}\`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    subscriptionMessage.textContent = '';
+                    subscriptionMessage.className = 'subscription-message';
+                }, 3000);
+            }
+        }
     </script>
     
     <!-- About Modal -->
